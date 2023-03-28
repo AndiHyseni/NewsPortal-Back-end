@@ -10,22 +10,40 @@ using System.Threading.Tasks;
 
 namespace Portal.Repositories
 {
-    public class NewsRepository:INewsRepository
+    public class NewsRepository : INewsRepository
     {
         private AppDbContext _context;
-            public NewsRepository(AppDbContext context) {
+        public NewsRepository(AppDbContext context)
+        {
 
             _context = context;
-           }
+        }
 
         public async Task<List<News>> GetAllNews()
         {
             try
             {
-                List<News> news = _context.news.Include(x=> x.Category).Where(x => x.IsDeleted == false && x.Category.ShowOnline==true).ToList();
-                return  news;
+                List<News> news = await _context.news
+               .Where(x => !x.IsDeleted && x.Category.ShowOnline)
+               .Select(x => new News()
+               {
+                   NewsId = x.NewsId,
+                   Title = x.Title,
+                   SubTitle = x.SubTitle,
+                   CategoryId = x.CategoryId,
+                   Category = new Category()
+                   {
+                       Name = x.Category.Name
+                   } ,
+                   NumberOfClicks = x.views.Count(),
+                   CreatedOnDate = x.CreatedOnDate,
+                   Image=x.Image
+               })
+               .ToListAsync();
+
+                return news;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -34,10 +52,10 @@ namespace Portal.Repositories
         {
             try
             {
-                var news=_context.news.Include(x => x.Category).Where(x => x.IsDeleted == false && x.Category.ShowOnline == true && x.NewsId==Id).FirstOrDefault();
+                var news = _context.news.Include(x => x.Category).Where(x => x.IsDeleted == false && x.Category.ShowOnline == true && x.NewsId == Id).FirstOrDefault();
                 return news;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -49,7 +67,7 @@ namespace Portal.Repositories
                 if (news.NewsId == 0)
                 {
                     news.CreatedOnDate = DateTime.Now;
-                   
+
 
 
                     _context.Add(news);
@@ -57,17 +75,17 @@ namespace Portal.Repositories
                 else
                 {
                     news.UpdatedOnDate = DateTime.Now;
-                   
+
                     _context.Update(news);
                 }
                 _context.SaveChanges();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
         }
-        public async Task  DeleteNews(int id)
+        public async Task DeleteNews(int id)
         {
             try
             {
@@ -81,7 +99,7 @@ namespace Portal.Repositories
 
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -95,7 +113,7 @@ namespace Portal.Repositories
 
                 return wn;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -117,7 +135,7 @@ namespace Portal.Repositories
 
                 return views;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -125,13 +143,13 @@ namespace Portal.Repositories
 
         public async Task<List<News>> getSavedNews(string UserId)
         {
-            var saved = _context.saved.Where(x=> x.UserId==UserId).Include(x => x.News).Select(x => x.News).ToList();
+            var saved = _context.saved.Where(x => x.UserId == UserId).Include(x => x.News).Select(x => x.News).ToList();
 
             return saved;
-           
+
         }
-        
-        public async Task addView(int NewsId, string UserId,string FingerPrintId)
+
+        public async Task addView(int NewsId, string UserId, string FingerPrintId)
         {
             try
             {
@@ -141,7 +159,7 @@ namespace Portal.Repositories
                 _context.watcheds.Add(watched);
                 _context.SaveChanges();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -159,13 +177,13 @@ namespace Portal.Repositories
                 _context.saved.Add(saved);
                 _context.SaveChanges();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
         }
 
-        public async Task delete(int newsId,string UserId)
+        public async Task delete(int newsId, string UserId)
         {
             try
             {
@@ -176,7 +194,7 @@ namespace Portal.Repositories
                     _context.SaveChanges();
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -188,20 +206,20 @@ namespace Portal.Repositories
                 _context.reaction.Add(r);
                 _context.SaveChanges();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
 
             }
         }
-        public async  Task<List<Reaction>> getReactionsByNeews(int id)
+        public async Task<List<Reaction>> getReactionsByNeews(int id)
         {
             try
             {
-                var reactions = _context.reaction.Where(x => x.newsId == id).Include(x=> x.user).ToList();
+                var reactions = _context.reaction.Where(x => x.newsId == id).Include(x => x.user).ToList();
                 return reactions;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -210,16 +228,16 @@ namespace Portal.Repositories
         {
             try
             {
-                var reactions = _context.reaction.ToList().GroupBy(x=>x.newsId);
+                var reactions = _context.reaction.ToList().GroupBy(x => x.newsId);
                 List<ReactionVIewModel> model = new List<ReactionVIewModel>();
-                foreach(var item in reactions)
+                foreach (var item in reactions)
                 {
                     model.Add(new ReactionVIewModel { NewsId = item.FirstOrDefault().newsId, Sad = item.Where(x => x.reaction == 2).Count(), Happy = item.Where(x => x.reaction == 1).Count(), Angry = item.Where(x => x.reaction == 3).Count() });
 
                 }
                 return model;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -228,7 +246,7 @@ namespace Portal.Repositories
         {
             try
             {
-                var views = _context.watcheds.Where(x => x.FingerPrintId == fingerprintId && x.userId==null).ToList();
+                var views = _context.watcheds.Where(x => x.FingerPrintId == fingerprintId && x.userId == null).ToList();
 
                 views.ForEach(x => x.userId = userId);
 
@@ -236,7 +254,7 @@ namespace Portal.Repositories
                 _context.SaveChanges();
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
@@ -249,28 +267,29 @@ namespace Portal.Repositories
             try
             {
                 var tags = new List<string>();
-                var news = _context.news.Where(x=> x.tags.Contains(tag)).ToList();
+                var news = _context.news.Where(x => x.tags.Contains(tag)).ToList();
 
                 return news;
 
-               
+
 
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw ex;          
+                throw ex;
             }
         }
-       public async  Task<List<News>> GetMostWatched()
+        public async Task<List<News>> GetMostWatched()
         {
             try
             {
                 var news = _context.watcheds.Include(x => x.News).Select(x => x.News).ToList();
                 return news;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                throw ex;            }
+                throw ex;
+            }
         }
 
 

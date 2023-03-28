@@ -29,6 +29,7 @@ namespace Portal.Models
         public DateTime UpdatedOnDate { get; set; }
         public string CreatedBy { get; set; }
         public string tags { get;set;}
+        public IEnumerable<Watched> views { get; set; }
         
 
     }
