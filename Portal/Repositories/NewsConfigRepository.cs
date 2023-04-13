@@ -31,6 +31,7 @@ namespace Portal.Repositories
         {
             try
             {
+               
                 _context.Update(newsCfg);
                 _context.SaveChanges();
             }

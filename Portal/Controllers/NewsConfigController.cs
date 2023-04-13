@@ -29,7 +29,10 @@ namespace Portal.Controllers
         [HttpPost]
         public async Task<ActionResult> EditNewsConfigRow(NewsConfig newsConfig)
         {
-
+            if (newsConfig.NewsConfigId == 0)
+            {
+                newsConfig.NewsConfigId = 1;
+            }
           var task= _newsConfig.EditConfigRow(newsConfig);
             if (task.IsCompletedSuccessfully)
             {
