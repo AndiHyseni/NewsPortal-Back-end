@@ -33,7 +33,7 @@ namespace Portal.Repositories
                 model.VIews = dbContext.watcheds.Count();
                 model.Angry = dbContext.reaction.Where(x => x.reaction == 3).Count();
                 model.Sad = dbContext.reaction.Where(x => x.reaction == 2).Count();
-                model.Happy = dbContext.reaction.Where(x => x.reaction == 2).Count();
+                model.Happy = dbContext.reaction.Where(x => x.reaction == 1).Count();
                 var list = await userManager.GetUsersInRoleAsync("Admin");
                 model.Admins = list.Count();
 
